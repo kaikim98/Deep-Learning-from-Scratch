@@ -3,13 +3,19 @@
 # 4.2.1 Mean squared error
 import numpy as np
 
+def softmax(a):
+    exp_a = np.exp(a)
+    sum_exp_a = np.sum(exp_a)
+    y = exp_a / sum_exp_a
+    return y
+
 def mean_squared_error(y, t):
     return 0.5 * np.sum((y-t)**2)
 t = [0,0,1,0,0,0,0,0,0,0]
 y = [0.1, 0.05, 0.6, 0.0, 0.05, 0.1,0.0,0.1,0.0,0.0]
 mean_squared_error(np.array(y), np.array(t))
 
-# 4.2.2 Cross entropy error
+# 4.2.2 Cross Entropy Error
 def cross_entropy_error(y, t):
     delta = 1e-7
     return -np.sum(t*np.log(y+delta))
@@ -18,7 +24,7 @@ t = [0,0,1,0,0,0,0,0,0,0]
 y = [0.1, 0.05, 0.6, 0.0, 0.05, 0.1,0.0,0.1,0.0,0.0]
 cross_entropy_error(np.array(y), np.array(t))
 
-# %% 4.3 Numeriacal differentiation
+# %% 4.3 Numeriacal Differentiation
 # 4.3.1 Differentiation
 def numerical_diff(f,x):
     h = 1e-4
@@ -37,3 +43,110 @@ plt.xlabel('x')
 plt.ylabel('f(x)')
 plt.plot(x,y)
 plt.show()
+
+numerical_diff(function_1, 5) #Origin value of f'(5) :  0.2 => almost same
+
+def tangent_line(f, x):
+    d = numerical_diff(f, x)
+    print(d)
+    y = f(x) - d*x
+    return lambda t: d*t + y
+     
+x = np.arange(0.0, 20.0, 0.1)
+y = function_1(x)
+plt.xlabel("x")
+plt.ylabel("f(x)")
+
+tf = tangent_line(function_1, 5)
+y2 = tf(x)
+
+plt.plot(x, y)
+plt.plot(x, y2)
+plt.show()
+# from (https://github.com/WegraLee/deep-learning-from-scratch/blob/master/ch04/gradient_1d.py)
+# %% 4.3.3 Partial Derivative
+def function_2(x):
+    return x[0]**2 + x[1]**2
+    # or return np.sum(x**2)
+
+def function_tmp1(x0):
+    return x0*x0 + 4.0**2.0
+numerical_diff(function_tmp1, 3.1)
+
+# %% 4.4 Gradient
+def numerical_gradient(f,x):
+    h = 1e-4 #0.0001
+    grad = np.zeros_like(x)
+    
+    for idx in range(x.size):
+        tmp_val = x[idx]
+        x[idx] = tmp_val + h
+        fxh1 = f(x)
+        
+        x[idx] = tmp_val -h
+        fxh2 = f(x)
+        
+        grad[idx] = (fxh1-fxh2)/(2*h)
+        x[idx] = tmp_val
+    return grad
+
+numerical_gradient(function_2, np.array([3.0, 4.0]))
+
+# %% 4.4.1 Gradient Descent Method
+def gradient_descent(f, init_x, lr=0.01, step_num=100):
+    x = init_x
+    
+    for i in range(step_num):
+        grad = numerical_gradient(f, x)
+        x -= lr*grad
+        
+    return x
+
+def funciton_2(x):
+    return x[0] **2 + x[1] ** 2
+init_x = np.array([-3.0, 4.0])
+gradient_descent(function_2, init_x= init_x, lr=0.1, step_num=100) # almost 0
+
+# if too high learning rate : lr=10.0
+init_x = np.array([-3.0, 4.0])
+gradient_descent(function_2, init_x= init_x, lr=10.0, step_num=100)
+
+# if too low learning rate : lr=1e-10
+init_x = np.array([-3.0, 4.0])
+gradient_descent(function_2, init_x= init_x, lr=1e-10, step_num=100)
+
+# %% 4.4.2 Gradient in Neural Network
+import sys, os
+sys.path.append(os.pardir)
+import numpy as np
+# from common.funcitons import softmax, cross_entropy_error
+# from common.gradient import numerical_gradient
+
+class simpleNet:
+    def __init__(self):
+        self.W = np.random.randn(2,3)
+    def predict(self, x):
+        return np.dot(x, self.W)
+    def loss(self, x, t):
+        z = self.predict(x)
+        y = softmax(z)
+        loss = cross_entropy_error(y,t)
+        
+        return loss
+    
+net = simpleNet()
+print(net.W)
+
+x = np.array([0.6, 0.9])
+p = net.predict(x)
+print(p)
+
+np.argmax(p)
+t = np.array([1, 0, 0])
+net.loss(x, t)
+
+def f(W):
+    return net.loss(x,t)
+
+dW = numerical_gradient(f, net.W)
+print(dW)
