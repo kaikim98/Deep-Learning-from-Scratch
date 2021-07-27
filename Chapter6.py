@@ -132,4 +132,38 @@ for i in range(1000000000):
         epoch_cnt += 1
         if epoch_cnt > max_epochs:
             break
+
+# %% 6.4.3 Dropout
+class Dropout:
+    def __init__(self, dropout_ratio = 0.5):
+        self.dropout_ratio = dropout_ratio
+        self.mask = None
+    
+    def forward(self, x, train_flg = True): # In every forward propagation, express False to self.mask which neuron to delte
+            self.mask = np.random.rand(*x.shape)> self.dropout_ratio
+            return x * self.mask
+        else:
+            return x * (1.0 - self.dropout_ratio)
         
+    def backward(self, dout):
+        return dout * self.mask
+    
+# %% 6.5 Searching appropriate hyperparameter value
+# 6.5.1 Validation data
+(x_train, t_trian), (x_test, t_test) = load_mnist()
+
+# Shuffle dataset
+x_train, t_train = shuffle_dataset(x_train, t_train)
+
+# Divide 20% of data to validation data
+validation_rate = 0.20
+validation_num = int(x_train.shape[0] * validation_shape)
+
+x_val = x_train[:validation_num]
+t_val = t_train[:validation_num]
+x_train = x_train[validation_num:]
+t_train = t_train[validation_num:] 
+
+# %% 6.5.3 Implement hyperparameter optimization
+weight_decay = 10 ** np.random.uniform(-8,-4)
+lr = 10 ** np.random.uniform(-6, -2)
